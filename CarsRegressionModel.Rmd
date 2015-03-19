@@ -1,0 +1,101 @@
+---
+title: "Which kind of Transmission is Better for MPG"
+author: "David Zhiqiang MA Adam"
+output: word_document
+Date: March 18th, 2015
+---
+###Overview
+There are always same questions we are being asked, "Is an automatic or manual transmission better for MPG (miles per gallon)"? "Can you show me the quantitative MPG difference between automatic and manual transmissions?" such kinds of question which are related to choosing a car and saving money on gasoline.
+In this document we will give our answer to these questions based on our data.
+  
+This supplement published with our monthly magazione Motor Trend, you could also find the online version on RPubs [here](http://rpubs.com/DavidMzq/66038)
+
+### Executive Summary
+Firstly we setup the relationship between transmission and MPG via statistical regression analysis technology and find the result that manual transmission is better for MPG. Secondly we go deeperly with data to show the detailed quantitative information on MPG  between the two main transmissions.
+After analysing the single variable transmission, we create new models with new variables to further our finding about which variables help increase MPG.
+
+### Analysis phase I:
+  
+In this part, we setup a regression model between transmissions and MPG. And below are the first 6 records of data.
+```{r, echo = TRUE, fig.width=6, fig.height = 4}
+data(mtcars)
+head(mtcars)
+```
+  
+here, the most left column shows cars' model and, other colums are properties of that model. while **am** variable is for Transmission (0 = automatic, 1 = manual) and as its names suggests mpg column is for MPG.
+
+#### Bar plot with Regression Line
+Now, let's draw a basic bar plot to show the general distribution of MPG(mpg) with Transmission(am) and a regression line to show the general relationship between MPG(mpg) and Transmission(am).
+```{r, echo = TRUE, fig.width=6, fig.height = 4}
+plot(factor(mtcars$am),mtcars$mpg)
+abline(lm(mpg~am,data=mtcars),col="red",lwd=3)
+```
+  
+There's obvious difference between these 2 variables compared their highest, mean and lowest value pairs. On any level, the manual transmission cars has a bigger MPG value.(0 for automatic and 1 for manual).  
+And We could also find the trend has a positive slope that means when transmission increases one unit(from 0 to 1), or to say from automatic to manual, the MPG value will increase.
+
+#### Quantitative Difference
+```{r, echo = TRUE, fig.width=6, fig.height = 4}
+fit=lm(mtcars$mpg~factor(mtcars$am))
+fit
+```
+  
+Here, the **intercept** 17.147 is a virtual value when the regression model created, which can be regarded as a meaningless value used only for model creation(transmission equals negative value), and the **slope** 7.245 means every one unit increase of transmission will beget 7.245 units increase of MPG, or to say manual transmision cars has a higher MPG 7.245 than the automatic cars in general.
+
+### Getting a confidence interval
+```{r, echo = TRUE, fig.width=6, fig.height = 4}
+sumCoef <- summary(fit)$coefficients
+sumCoef[2,1] + c(-1, 1) * qt(.975, df = fit$df) * sumCoef[2, 2]
+```
+  
+It shows the 95% confidence is 3.64151~10.84837, that make us confident for the conclusion that manual transmission have a higher MPG than automatic ones.
+
+### Residual Plot and diagnostic
+Now, draw a residual point plot.
+```{r, echo = TRUE, fig.width=6, fig.height = 4}
+plot(mtcars$am, resid(lm(mtcars$mpg ~ factor(mtcars$am))))
+```
+   
+As the plot shows both transmissions have a very scattered (-10,10 for manual ) or (-7.5,7.5 automatic) residual, which means our model may be influenced by other variables and let's do more research. 
+  
+### Analysis phase II:
+Now, we try to introduce other variables along with transmission. Since if the number of variables is greater than 2 will confuse customers rather than help them, so our purpose is finding one of the most useful variable along with transmission.
+#### Variables choosen
+Here are all variables that could influence MPG.  
+**wt**    - Car Weight (lb/1000)  
+**gear**  - Number of forward gears  
+**carb**  - Number of carburetors  
+**hp**    - Gross horsepower  
+**cyl**   - Number of cylinders  
+
+#### Create models based on transmission plus one more variable
+```{r, echo = TRUE, fig.width=6, fig.height = 4}
+fit0<-lm(mpg ~ factor(am) , data = mtcars) 
+fit1<-lm(mpg ~ factor(am)+wt , data = mtcars) 
+fit2<-lm(mpg ~ factor(am)+gear , data = mtcars) 
+fit3<-lm(mpg ~ factor(am)+carb , data = mtcars) 
+fit4<-lm(mpg ~ factor(am)+hp , data = mtcars) 
+fit5<-lm(mpg ~ factor(am)+factor(cyl) , data = mtcars) 
+```
+#### Get significance value of each variable
+```{r, echo = TRUE, fig.width=6, fig.height = 4}
+at1<-anova(fit1);at2<-anova(fit2);at3<-anova(fit3);at4<-anova(fit4);at5<-anova(fit5)
+```
+####Show P-Value results
+For those variable with P-value >5%, that means it's not significant to be introduced with the better fitted model.
+```{r, echo = TRUE, fig.width=6, fig.height = 4}
+at1$Pr[2];at2$Pr[2];at3$Pr[2];at4$Pr[2];at5$Pr[2]
+```
+  
+From the result, we know all 4 variables may influence MPG except the second one **gear**.
+  
+#### Fit he best model
+```{r, echo = TRUE, fig.width=6, fig.height = 4}
+summary(fit1)$coef;summary(fit3)$coef;summary(fit4)$coef;summary(fit5)$coef
+````
+#### Interpreter of the best second variable.
+Based on the results from all 4 variables, the **weight** variables even reverse the effect of transmission so it could be removed from our model. The 3rd one **carb** doesn't impact the transmission so obviously (in this case, the transmission slope is about 7, same as the original model contains only one variable transmission), the 4th **hp** have a very small influence with very small slope, while the last variable **cyl** does impact much, its slope is smaller than -6 (for different number of cylinders, their slopes are -6.16 and -10.07) . That means the number of cylinders are significant for MPG and the more number of cylinders, the lower MPG it gets.
+
+###Conclusion
+Now we could answer the most asked question confidently, the manual transmission will really get a higher MPG, besides this concern, cars with smaller Number of cylinders will get higher MPG as well.
+Hope it helps when you are choosing your car.
